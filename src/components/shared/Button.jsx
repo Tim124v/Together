@@ -25,11 +25,12 @@ export default function Button({
   size = 'md',
   icon: Icon,
   className,
+  type = 'button',
   ...props
 }) {
   return (
     <button
-      type="button"
+      type={type}
       className={cx(
         'inline-flex items-center justify-center gap-2 rounded-xl font-semibold tracking-tight transition-all duration-200',
         'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/25 disabled:pointer-events-none disabled:opacity-50',

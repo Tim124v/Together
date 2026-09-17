@@ -24,9 +24,9 @@ function AddTaskModal({ open, onClose }) {
     open,
   )
 
-  const submit = () => {
+  const submit = async () => {
     if (!values.title.trim()) return
-    addTask({ ...values, title: values.title.trim() })
+    await addTask({ ...values, title: values.title.trim() })
     onClose()
   }
 
@@ -97,9 +97,9 @@ function AddEventModal({ open, onClose }) {
     open,
   )
 
-  const submit = () => {
+  const submit = async () => {
     if (!values.title.trim()) return
-    addEvent({ ...values, title: values.title.trim(), place: values.place.trim() || 'Место уточняется' })
+    await addEvent({ ...values, title: values.title.trim(), place: values.place.trim() || 'Место уточняется' })
     onClose()
   }
 
@@ -174,9 +174,9 @@ function AddWishModal({ open, onClose }) {
     open,
   )
 
-  const submit = () => {
+  const submit = async () => {
     if (!values.title.trim()) return
-    addWish({
+    await addWish({
       ...values,
       title: values.title.trim(),
       description: values.description.trim() || 'Пока без описания — главное начать',

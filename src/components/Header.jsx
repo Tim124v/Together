@@ -1,13 +1,18 @@
-import { FiBell, FiMenu, FiMoon, FiSearch, FiSun } from 'react-icons/fi'
+import { FiBell, FiLogOut, FiMenu, FiMoon, FiSearch, FiSun } from 'react-icons/fi'
 import { HiOutlineSparkles } from 'react-icons/hi2'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
+import { useData } from '../context/DataContext'
 import { cx, ownerStyle } from '../utils/helpers'
 import Avatar from './shared/Avatar'
 
 function UserPill({ owner }) {
   const { users } = useApp()
+  const { onlineIds } = useData()
   const user = users[owner]
   const style = ownerStyle(owner)
+  const online = owner === 'both' || onlineIds.includes(user.id)
 
   return (
     <div
@@ -19,7 +24,9 @@ function UserPill({ owner }) {
       <Avatar owner={owner} size="sm" ring={false} />
       <div className="hidden leading-tight sm:block">
         <p className="text-xs font-bold tracking-tight">{user.name}</p>
-        <p className={cx('text-[10px] font-semibold', style.text)}>онлайн</p>
+        <p className={cx('text-[10px] font-semibold', online ? style.text : 'text-slate-400')}>
+          {online ? 'онлайн' : 'офлайн'}
+        </p>
       </div>
     </div>
   )
@@ -27,6 +34,8 @@ function UserPill({ owner }) {
 
 export default function Header({ onMenuClick }) {
   const { theme, toggleTheme, stats } = useApp()
+  const { logout } = useAuth()
+  const navigate = useNavigate()
 
   return (
     <header className="sticky top-0 z-30 border-b border-white/60 bg-canvas/80 backdrop-blur-xl dark:border-white/10 dark:bg-[#0b1020]/80">
@@ -94,6 +103,18 @@ export default function Header({ onMenuClick }) {
             <span className="hidden text-lg sm:block">💞</span>
             <UserPill owner="she" />
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              logout()
+              navigate('/login')
+            }}
+            aria-label="Выйти"
+            className="grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-500"
+          >
+            <FiLogOut className="text-lg" />
+          </button>
         </div>
       </div>
     </header>

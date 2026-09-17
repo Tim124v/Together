@@ -9,7 +9,10 @@ import {
   FiTrendingUp,
 } from 'react-icons/fi'
 import { HiOutlineSparkles } from 'react-icons/hi2'
+import { useEffect } from 'react'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
+import { useData } from '../context/DataContext'
 import { cx, formatDate, ownerStyle, plural, relativeDate, todayISO } from '../utils/helpers'
 import Avatar, { AvatarPair } from './shared/Avatar'
 import Button from './shared/Button'
@@ -49,8 +52,8 @@ function MetricCard({ label, value, caption, icon: Icon, gradient, trend }) {
 }
 
 function HeroBanner() {
-  const { stats, openModal, anniversaries } = useApp()
-  const upcoming = [...anniversaries].sort((a, b) => a.date.localeCompare(b.date))
+  const { stats, openModal, anniversaries, users } = useApp()
+  const upcoming = [...anniversaries].sort((a, b) => (a.date || '').localeCompare(b.date || ''))
   const nearest = upcoming.find((item) => item.date >= todayISO()) ?? upcoming[0]
 
   return (
@@ -63,7 +66,7 @@ function HeroBanner() {
             <HiOutlineSparkles /> Ваш день вдвоём
           </span>
           <h1 className="mt-4 text-2xl font-extrabold leading-tight tracking-tight sm:text-[32px]">
-            Привет, Артём &amp; Катя 💞
+            Привет, {users.he.name} &amp; {users.she.name} 💞
           </h1>
           <p className="mt-2 text-sm text-white/80">
             {stats.todayTasks > 0
@@ -101,14 +104,14 @@ function HeroBanner() {
         <div className="w-full max-w-[220px] rounded-2xl bg-white/12 p-4 backdrop-blur-md ring-1 ring-white/20">
           <div className="flex items-center justify-between">
             <AvatarPair size="md" />
-            <span className="text-2xl animate-float">{nearest.emoji}</span>
+            <span className="text-2xl animate-float">{nearest?.emoji || '💞'}</span>
           </div>
           <p className="mt-3.5 text-xs font-semibold uppercase tracking-wide text-white/60">
             Ближайшая дата
           </p>
-          <p className="mt-1 text-sm font-bold leading-tight">{nearest.title}</p>
+          <p className="mt-1 text-sm font-bold leading-tight">{nearest?.title || 'Пока тихо'}</p>
           <p className="mt-0.5 text-xs text-white/70">
-            {formatDate(nearest.date)} · {relativeDate(nearest.date)}
+            {nearest ? `${formatDate(nearest.date)} · ${relativeDate(nearest.date)}` : 'Добавьте событие'}
           </p>
         </div>
       </div>
@@ -197,7 +200,7 @@ function ActivityFeed() {
               </span>
               <div className="min-w-0 pt-1">
                 <p className="text-sm leading-snug">
-                  <span className="font-bold tracking-tight">{users[item.user].name}</span>{' '}
+                  <span className="font-bold tracking-tight">{users[item.user]?.name || 'Кто-то'}</span>{' '}
                   <span className="text-slate-500 dark:text-slate-400">{item.text}</span>
                 </p>
                 <p className="mt-0.5 text-[11px] text-slate-400">{item.time}</p>
@@ -217,8 +220,11 @@ function Anniversaries() {
     <Card>
       <CardHeader icon={FiHeart} title="Памятные даты" subtitle="Не пропустите главное" />
       <div className="space-y-2.5">
+        {anniversaries.length === 0 && (
+          <p className="text-sm text-slate-400">Памятные даты появятся из общего календаря</p>
+        )}
         {[...anniversaries]
-          .sort((a, b) => a.date.localeCompare(b.date))
+          .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
           .map((item) => (
             <div
               key={item.id}
@@ -278,6 +284,12 @@ function WishSpotlight() {
 
 export default function Dashboard() {
   const { stats } = useApp()
+  const { couple } = useAuth()
+  const { loadData } = useData()
+
+  useEffect(() => {
+    if (couple?.id) loadData()
+  }, [couple?.id, loadData])
 
   return (
     <div className="page-enter space-y-5">

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { FiCalendar, FiMinus, FiPlus } from 'react-icons/fi'
+import { FiCalendar, FiMinus, FiPlus, FiTrash2 } from 'react-icons/fi'
 import { HiOutlineSparkles } from 'react-icons/hi2'
 import { useApp } from '../context/AppContext'
 import { wishCategories } from '../data/mockData'
@@ -10,7 +10,7 @@ import Card from './shared/Card'
 import ProgressBar from './shared/ProgressBar'
 
 function WishCard({ wish }) {
-  const { updateWishProgress, users } = useApp()
+  const { updateWishProgress, removeWish, users } = useApp()
   const style = ownerStyle(wish.assigned)
   const priority = PRIORITY[wish.priority]
 
@@ -26,7 +26,19 @@ function WishCard({ wish }) {
             <p className="text-sm font-extrabold leading-snug tracking-tight">{wish.title}</p>
             <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{wish.description}</p>
           </div>
-          <span className={cx('chip shrink-0 px-2 py-1 text-[10px]', priority.className)}>{priority.label}</span>
+          <div className="flex shrink-0 items-center gap-1">
+            <span className={cx('chip px-2 py-1 text-[10px]', priority.className)}>{priority.label}</span>
+            <button
+              type="button"
+              aria-label="Удалить желание"
+              onClick={() => {
+                if (window.confirm('Удалить эту мечту?')) removeWish(wish.id)
+              }}
+              className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-500"
+            >
+              <FiTrash2 className="text-xs" />
+            </button>
+          </div>
         </div>
 
         <div className="mt-3.5 flex flex-wrap items-center gap-2">

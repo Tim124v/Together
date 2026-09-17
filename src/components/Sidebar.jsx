@@ -1,27 +1,37 @@
-import { FiCalendar, FiCheckSquare, FiGrid, FiHeart, FiPlus, FiX } from 'react-icons/fi'
+import { FiCalendar, FiCheckSquare, FiClock, FiDollarSign, FiGrid, FiHeart, FiPlus, FiX } from 'react-icons/fi'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 import { cx } from '../utils/helpers'
 import { AvatarPair } from './shared/Avatar'
 import ProgressBar from './shared/ProgressBar'
 
 export const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', hint: 'Главный экран', icon: FiGrid },
-  { id: 'tasks', label: 'Задачи', hint: 'Общий канбан', icon: FiCheckSquare },
-  { id: 'calendar', label: 'Календарь', hint: 'События вдвоём', icon: FiCalendar },
-  { id: 'wishes', label: 'Мечты', hint: 'Список желаний', icon: FiHeart },
+  { id: 'dashboard', label: 'Dashboard', short: 'Главная', hint: 'Главный экран', icon: FiGrid, to: '/' },
+  { id: 'tasks', label: 'Задачи', short: 'Задачи', hint: 'Общий канбан', icon: FiCheckSquare, to: '/tasks' },
+  { id: 'calendar', label: 'Календарь', short: 'Календарь', hint: 'События вдвоём', icon: FiCalendar, to: '/calendar' },
+  { id: 'wishes', label: 'Мечты', short: 'Мечты', hint: 'Список желаний', icon: FiHeart, to: '/wishes' },
+  { id: 'capsules', label: 'Капсулы', short: 'Капсулы', hint: 'Архив памяти', icon: FiClock, to: '/capsules' },
+  { id: 'budget', label: 'Бюджет', short: 'Бюджет', hint: 'Общие расходы', icon: FiDollarSign, to: '/budget' },
 ]
 
 export default function Sidebar({ mobileOpen, onClose }) {
-  const { page, setPage, tasks, events, wishes, openModal, stats } = useApp()
+  const { page, tasks, events, wishes, capsules, expenses, openModal, stats } = useApp()
+  const { couple } = useAuth()
+  const navigate = useNavigate()
 
   const counters = {
     dashboard: null,
     tasks: tasks.filter((t) => t.status !== 'done').length,
     calendar: events.length,
     wishes: wishes.length,
+    capsules: capsules?.length || 0,
+    budget: expenses?.length || 0,
   }
 
-  const doneShare = Math.round((tasks.filter((t) => t.status === 'done').length / tasks.length) * 100)
+  const doneShare = tasks.length
+    ? Math.round((tasks.filter((t) => t.status === 'done').length / tasks.length) * 100)
+    : 0
 
   const content = (
     <div className="flex h-full flex-col gap-6 p-4">
@@ -38,14 +48,14 @@ export default function Sidebar({ mobileOpen, onClose }) {
       </div>
 
       <nav className="space-y-1.5">
-        {NAV_ITEMS.map(({ id, label, hint, icon: Icon }) => {
+        {NAV_ITEMS.map(({ id, label, hint, icon: Icon, to }) => {
           const active = page === id
           return (
             <button
               key={id}
               type="button"
               onClick={() => {
-                setPage(id)
+                navigate(to)
                 onClose?.()
               }}
               className={cx(
@@ -117,7 +127,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
           <AvatarPair size="sm" />
           <span className="text-lg animate-float">💞</span>
         </div>
-        <p className="text-sm font-bold leading-tight">Артём &amp; Катя</p>
+        <p className="text-sm font-bold leading-tight">{couple?.coupleName || 'Together'}</p>
         <p className="mt-0.5 text-[11px] text-white/60">{stats.daysTogether} дней вместе</p>
         <div className="mt-4">
           <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-white/70">

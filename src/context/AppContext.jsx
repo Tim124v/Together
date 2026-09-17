@@ -1,25 +1,34 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
-import {
-  activities as seedActivities,
-  anniversaries,
-  daysTogether,
-  events as seedEvents,
-  tasks as seedTasks,
-  users,
-  wishes as seedWishes,
-} from '../data/mockData'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { COLOR_BY_OWNER, plural, todayISO } from '../utils/helpers'
+import {
+  anniversariesFromEvents,
+  daysTogetherFrom,
+  toFeedActivity,
+  togetherCaption,
+  usersFromCouple,
+} from '../utils/mappers'
+import { useAuth } from './AuthContext'
+import { useData } from './DataContext'
 
 const AppContext = createContext(null)
 
-const PAGES = ['dashboard', 'tasks', 'calendar', 'wishes']
+const PATH_TO_PAGE = {
+  '/': 'dashboard',
+  '/tasks': 'tasks',
+  '/calendar': 'calendar',
+  '/wishes': 'wishes',
+  '/capsules': 'capsules',
+  '/budget': 'budget',
+}
 
-let nextId = 1000
-const makeId = () => (nextId += 1)
-
-const pageFromHash = () => {
-  const hash = window.location.hash.replace('#', '')
-  return PAGES.includes(hash) ? hash : 'dashboard'
+const PAGE_TO_PATH = {
+  dashboard: '/',
+  tasks: '/tasks',
+  calendar: '/calendar',
+  wishes: '/wishes',
+  capsules: '/capsules',
+  budget: '/budget',
 }
 
 const themeFromEnv = () => {
@@ -31,13 +40,15 @@ const themeFromEnv = () => {
 }
 
 export function AppProvider({ children }) {
+  const { couple } = useAuth()
+  const data = useData()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [theme, setTheme] = useState(themeFromEnv)
-  const [page, setPage] = useState(pageFromHash)
-  const [tasks, setTasks] = useState(seedTasks)
-  const [events, setEvents] = useState(seedEvents)
-  const [wishes, setWishes] = useState(seedWishes)
-  const [activities, setActivities] = useState(seedActivities)
-  const [modal, setModal] = useState(null) // 'task' | 'event' | 'wish' | null
+  const [modal, setModal] = useState(null)
+
+  const page = PATH_TO_PAGE[location.pathname] || 'dashboard'
+  const setPage = useCallback((id) => navigate(PAGE_TO_PATH[id] || '/'), [navigate])
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
@@ -45,100 +56,76 @@ export function AppProvider({ children }) {
     localStorage.setItem('together-theme', theme)
   }, [theme])
 
-  useEffect(() => {
-    if (pageFromHash() !== page) window.location.hash = page
-    const onHashChange = () => setPage(pageFromHash())
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
-  }, [page])
-
   const toggleTheme = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), [])
 
-  const logActivity = useCallback((user, text, icon = 'task') => {
-    setActivities((prev) => [{ id: makeId(), user, text, time: 'только что', icon }, ...prev].slice(0, 8))
-  }, [])
-
-  const addTask = useCallback(
-    (task) => {
-      const created = {
-        id: makeId(),
-        status: 'todo',
-        ...task,
-        color: COLOR_BY_OWNER[task.assigned] ?? 'green',
-      }
-      setTasks((prev) => [created, ...prev])
-      logActivity(task.assigned, `добавил(а) задачу «${task.title}»`, 'task')
-    },
-    [logActivity],
+  const users = useMemo(() => usersFromCouple(couple), [couple])
+  const activities = useMemo(
+    () => data.activities.map((row) => toFeedActivity(row, couple)),
+    [data.activities, couple],
   )
-
-  const moveTask = useCallback((id, status) => {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)))
-  }, [])
-
-  const toggleTask = useCallback(
-    (id) => {
-      setTasks((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, status: t.status === 'done' ? 'todo' : 'done' } : t)),
-      )
-      const task = tasks.find((t) => t.id === id)
-      if (task && task.status !== 'done') {
-        logActivity(task.assigned, `завершил(а) задачу «${task.title}»`, 'check')
-      }
-    },
-    [tasks, logActivity],
-  )
-
-  const removeTask = useCallback((id) => setTasks((prev) => prev.filter((t) => t.id !== id)), [])
-
-  const addEvent = useCallback(
-    (event) => {
-      const created = {
-        id: makeId(),
-        ...event,
-        color: COLOR_BY_OWNER[event.participants] ?? 'green',
-      }
-      setEvents((prev) => [...prev, created])
-      logActivity(event.participants, `добавил(а) событие «${event.title}»`, 'calendar')
-    },
-    [logActivity],
-  )
-
-  const addWish = useCallback(
-    (wish) => {
-      const created = { id: makeId(), progress: 0, ...wish }
-      setWishes((prev) => [created, ...prev])
-      logActivity(wish.assigned, `создал(а) мечту «${wish.title}»`, 'star')
-    },
-    [logActivity],
-  )
-
-  const updateWishProgress = useCallback((id, progress) => {
-    setWishes((prev) => prev.map((w) => (w.id === id ? { ...w, progress } : w)))
-  }, [])
+  const anniversaries = useMemo(() => anniversariesFromEvents(data.events), [data.events])
 
   const stats = useMemo(() => {
     const today = todayISO()
     const [year, month] = today.split('-')
+    const tasks = data.tasks
+    const events = data.events
+    const wishes = data.wishes
     const todayOpen = tasks.filter((t) => t.dueDate === today && t.status !== 'done')
-    const monthEvents = events.filter((e) => e.date.startsWith(`${year}-${month}`))
-    const sharedMonth = monthEvents.filter((e) => e.participants === 'both').length
+    const monthEvents = events.filter((e) => (e.date || '').startsWith(`${year}-${month}`))
+    const daysTogether = daysTogetherFrom(couple?.startDate)
+    const years = Math.floor(daysTogether / 365)
+    const months = Math.round((daysTogether % 365) / 30.437)
     const avgProgress = wishes.length
       ? Math.round(wishes.reduce((sum, w) => sum + w.progress, 0) / wishes.length)
       : 0
-    const years = Math.floor(daysTogether / 365)
-    const months = Math.round((daysTogether % 365) / 30.437)
     return {
       todayTasks: todayOpen.length,
       todayShared: todayOpen.filter((t) => t.assigned === 'both').length,
       monthEvents: monthEvents.length,
-      monthShared: sharedMonth,
+      monthShared: monthEvents.filter((e) => e.participants === 'both').length,
       goals: wishes.length,
       avgProgress,
       daysTogether,
-      togetherCaption: `${years} ${plural(years, ['год', 'года', 'лет'])} ${months} ${plural(months, ['месяц', 'месяца', 'месяцев'])}`,
+      togetherCaption: togetherCaption(daysTogether),
+      years,
+      months,
     }
-  }, [tasks, events, wishes])
+  }, [data.tasks, data.events, data.wishes, couple?.startDate])
+
+  const addTask = useCallback(async (task) => {
+    await data.createTask({ ...task, color: task.color || COLOR_BY_OWNER[task.assigned] })
+  }, [data])
+
+  const moveTask = useCallback(async (id, status) => {
+    await data.updateTask(id, { status })
+  }, [data])
+
+  const toggleTask = useCallback(async (id) => {
+    const task = data.tasks.find((t) => t.id === id)
+    if (!task) return
+    await data.updateTask(id, { status: task.status === 'done' ? 'todo' : 'done' })
+  }, [data])
+
+  const removeTask = useCallback(async (id) => {
+    await data.deleteTask(id)
+  }, [data])
+
+  const addEvent = useCallback(async (event) => {
+    await data.createEvent(event)
+  }, [data])
+
+  const addWish = useCallback(async (wish) => {
+    await data.createWish(wish)
+  }, [data])
+
+  const updateWishProgress = useCallback(async (id, progress) => {
+    await data.updateWish(id, { progress })
+  }, [data])
+
+  const removeWish = useCallback(async (id) => {
+    await data.deleteWish(id)
+  }, [data])
 
   const value = useMemo(
     () => ({
@@ -147,26 +134,34 @@ export function AppProvider({ children }) {
       page,
       setPage,
       users,
-      tasks,
+      tasks: data.tasks,
       addTask,
       moveTask,
       toggleTask,
       removeTask,
-      events,
+      events: data.events,
       addEvent,
-      wishes,
+      wishes: data.wishes,
       addWish,
       updateWishProgress,
+      removeWish,
       activities,
       anniversaries,
       stats,
       modal,
       openModal: setModal,
       closeModal: () => setModal(null),
+      capsules: data.capsules,
+      expenses: data.expenses,
+      onlineIds: data.onlineIds,
+      loading: data.loading,
+      loadData: data.loadData,
     }),
     [
-      theme, toggleTheme, page, tasks, addTask, moveTask, toggleTask, removeTask,
-      events, addEvent, wishes, addWish, updateWishProgress, activities, stats, modal,
+      theme, toggleTheme, page, setPage, users, data.tasks, data.events, data.wishes,
+      data.capsules, data.expenses, data.onlineIds, data.loading, data.loadData,
+      addTask, moveTask, toggleTask, removeTask,
+      addEvent, addWish, updateWishProgress, removeWish, activities, anniversaries, stats, modal,
     ],
   )
 

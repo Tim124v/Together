@@ -2,4 +2,12 @@ node_modules
 dist
 .DS_Store
 *.log
+.env
+.env.local
+.env.production
 screenshots/_test.png
+together-backend/data
+together-backend/.env
+together-backend/data/together.sqlite
+.vercel
+.railway

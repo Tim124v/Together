@@ -1,0 +1,7 @@
+node_modules
+data
+data/together.sqlite
+.env
+.env.production
+*.log
+.DS_Store
