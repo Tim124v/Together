@@ -183,7 +183,13 @@ DB_SYNC=sync
 
 4. Проверка: `https://<сервис>.up.railway.app/health` и `/api/docs`.
 
-`npm run seed` на production **заблокирован** (стирает данные). Демо-пользователей создайте через `/register` или локальный seed.
+`npm run seed` на production **заблокирован** (стирает данные). Для демо-логина без wipe выполните в Railway:
+
+```bash
+railway run npm run seed:demo
+```
+
+Это создаст `artem@together.app` / `katya@together.app` (пароль `together123`), если их ещё нет.
 
 После деплоя фронта обновите `CORS_ORIGIN` на точный Vercel URL и рестартните сервис.
 
