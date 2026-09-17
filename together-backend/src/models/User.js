@@ -9,6 +9,9 @@ export const User = sequelize.define(
     passwordHash: { type: DataTypes.STRING(255), allowNull: false, field: 'password_hash' },
     name: { type: DataTypes.STRING(255), allowNull: false },
     avatarColor: { type: DataTypes.STRING(10), field: 'avatar_color' },
+    language: { type: DataTypes.STRING(8), defaultValue: 'en' },
+    currency: { type: DataTypes.STRING(8), defaultValue: 'USD' },
+    country: { type: DataTypes.STRING(8), field: 'country' },
   },
   { tableName: 'users', underscored: true, updatedAt: false },
 )
@@ -21,6 +24,9 @@ export function toPublicUser(user) {
     email: row.email,
     name: row.name,
     avatarColor: row.avatarColor,
+    language: row.language || 'en',
+    currency: row.currency || 'USD',
+    country: row.country || null,
     createdAt: row.createdAt,
   }
 }

@@ -1,14 +1,16 @@
 import { FiCheck, FiTrash2 } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
 import ExpenseItem from './ExpenseItem'
 import { categoryMeta, formatMoney, payerLabel, splitLabel } from '../../utils/budget'
 import { formatDate } from '../../utils/helpers'
 import { cx } from '../../utils/helpers'
 
 export default function ExpenseTable({ expenses, users, categories, onSettle, onDelete }) {
+  const { t } = useTranslation()
   if (!expenses.length) {
     return (
       <div className="surface-muted px-4 py-12 text-center text-sm text-slate-500">
-        Расходов в этом месяце нет. Добавьте первый — обед, продукты или поездку.
+        {t('budget.emptyMonth')}
       </div>
     )
   }
@@ -33,13 +35,13 @@ export default function ExpenseTable({ expenses, users, categories, onSettle, on
           <table className="min-w-[760px] w-full text-left text-sm">
             <thead className="bg-slate-50/80 text-[11px] uppercase tracking-wide text-slate-400 dark:bg-white/[0.03]">
               <tr>
-                <th className="px-4 py-3 font-bold">Дата</th>
-                <th className="px-4 py-3 font-bold">Описание</th>
-                <th className="px-4 py-3 font-bold">Категория</th>
-                <th className="px-4 py-3 font-bold">Сумма</th>
-                <th className="px-4 py-3 font-bold">Кто платил</th>
-                <th className="px-4 py-3 font-bold">Сплит</th>
-                <th className="px-4 py-3 font-bold">Действия</th>
+                <th className="px-4 py-3 font-bold">{t('common.date')}</th>
+                <th className="px-4 py-3 font-bold">{t('common.description')}</th>
+                <th className="px-4 py-3 font-bold">{t('common.category')}</th>
+                <th className="px-4 py-3 font-bold">{t('common.amount')}</th>
+                <th className="px-4 py-3 font-bold">{t('budget.whoPaid')}</th>
+                <th className="px-4 py-3 font-bold">{t('budget.howSplit')}</th>
+                <th className="px-4 py-3 font-bold">{t('common.actions')}</th>
               </tr>
             </thead>
             <tbody>

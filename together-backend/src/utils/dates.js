@@ -16,3 +16,12 @@ export const dayOfMonth = (day) => {
   const now = new Date()
   return toISODate(new Date(now.getFullYear(), now.getMonth(), day))
 }
+
+export const daysTogether = (startDate) => {
+  const iso = toISODate(startDate)
+  if (!iso) return 0
+  const start = new Date(`${iso}T00:00:00`)
+  const now = new Date()
+  now.setHours(0, 0, 0, 0)
+  return Math.max(0, Math.round((now - start) / 86400000))
+}

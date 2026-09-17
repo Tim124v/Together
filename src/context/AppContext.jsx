@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { COLOR_BY_OWNER, plural, todayISO } from '../utils/helpers'
+import { COLOR_BY_OWNER, todayISO } from '../utils/helpers'
 import {
   anniversariesFromEvents,
   daysTogetherFrom,
@@ -20,6 +21,8 @@ const PATH_TO_PAGE = {
   '/wishes': 'wishes',
   '/capsules': 'capsules',
   '/budget': 'budget',
+  '/settings': 'settings',
+  '/settings/pair': 'settings',
 }
 
 const PAGE_TO_PATH = {
@@ -29,6 +32,7 @@ const PAGE_TO_PATH = {
   wishes: '/wishes',
   capsules: '/capsules',
   budget: '/budget',
+  settings: '/settings',
 }
 
 const themeFromEnv = () => {
@@ -41,6 +45,7 @@ const themeFromEnv = () => {
 
 export function AppProvider({ children }) {
   const { couple } = useAuth()
+  const { i18n } = useTranslation()
   const data = useData()
   const navigate = useNavigate()
   const location = useLocation()
@@ -58,12 +63,12 @@ export function AppProvider({ children }) {
 
   const toggleTheme = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), [])
 
-  const users = useMemo(() => usersFromCouple(couple), [couple])
+  const users = useMemo(() => usersFromCouple(couple), [couple, i18n.language])
   const activities = useMemo(
     () => data.activities.map((row) => toFeedActivity(row, couple)),
-    [data.activities, couple],
+    [data.activities, couple, i18n.language],
   )
-  const anniversaries = useMemo(() => anniversariesFromEvents(data.events), [data.events])
+  const anniversaries = useMemo(() => anniversariesFromEvents(data.events), [data.events, i18n.language])
 
   const stats = useMemo(() => {
     const today = todayISO()
@@ -91,7 +96,7 @@ export function AppProvider({ children }) {
       years,
       months,
     }
-  }, [data.tasks, data.events, data.wishes, couple?.startDate])
+  }, [data.tasks, data.events, data.wishes, couple?.startDate, i18n.language])
 
   const addTask = useCallback(async (task) => {
     await data.createTask({ ...task, color: task.color || COLOR_BY_OWNER[task.assigned] })

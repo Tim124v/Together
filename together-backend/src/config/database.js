@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { Sequelize } from 'sequelize'
+import { DataTypes, Sequelize } from 'sequelize'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(here, '../..')
@@ -42,10 +42,43 @@ export const sequelize = process.env.DATABASE_URL
 
 export async function connectDatabase() {
   await sequelize.authenticate()
-  // SQLite и первый Postgres-деплой поднимают недостающие таблицы сами.
-  // alter — только если явно DB_SYNC=alter.
   const syncMode = process.env.DB_SYNC || 'sync'
-  if (syncMode === 'off') return
-  if (syncMode === 'alter') await sequelize.sync({ alter: true })
-  else await sequelize.sync()
+  if (syncMode !== 'off') {
+    if (syncMode === 'alter') await sequelize.sync({ alter: true })
+    else await sequelize.sync()
+  }
+  await ensureCoupleColumns()
+  await ensureUserColumns()
+}
+
+async function ensureCoupleColumns() {
+  const qi = sequelize.getQueryInterface()
+  let desc
+  try {
+    desc = await qi.describeTable('couples')
+  } catch {
+    return
+  }
+  const add = async (name, spec) => {
+    if (!desc[name]) await qi.addColumn('couples', name, spec)
+  }
+  await add('invite_code_at', { type: DataTypes.DATE, allowNull: true })
+  await add('previous_invite_code', { type: DataTypes.STRING(16), allowNull: true })
+  await add('partner_joined_at', { type: DataTypes.DATE, allowNull: true })
+}
+
+async function ensureUserColumns() {
+  const qi = sequelize.getQueryInterface()
+  let desc
+  try {
+    desc = await qi.describeTable('users')
+  } catch {
+    return
+  }
+  const add = async (name, spec) => {
+    if (!desc[name]) await qi.addColumn('users', name, spec)
+  }
+  await add('language', { type: DataTypes.STRING(8), allowNull: true })
+  await add('currency', { type: DataTypes.STRING(8), allowNull: true })
+  await add('country', { type: DataTypes.STRING(8), allowNull: true })
 }

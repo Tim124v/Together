@@ -1,5 +1,15 @@
 import { Router } from 'express'
-import { create, current, getOne, join, update } from '../controllers/couplesController.js'
+import {
+  create,
+  current,
+  getOne,
+  inviteCode,
+  join,
+  leave,
+  partnerInfo,
+  regenerateCode,
+  update,
+} from '../controllers/couplesController.js'
 import { requireAuth, requireCouple } from '../middleware/auth.js'
 import { validate } from '../middleware/validation.js'
 import { createCoupleSchema, joinCoupleSchema, updateCoupleSchema } from '../validation/schemas.js'
@@ -18,6 +28,10 @@ router.post('/', validate(createCoupleSchema), create)
 router.post('/join', validate(joinCoupleSchema), join)
 router.get('/:id', requireCouple, getOne)
 router.put('/:id', requireCouple, validate(updateCoupleSchema), update)
+router.get('/:id/invite-code', requireCouple, inviteCode)
+router.post('/:id/regenerate-code', requireCouple, regenerateCode)
+router.get('/:id/partner-info', requireCouple, partnerInfo)
+router.post('/:id/leave', requireCouple, leave)
 
 router.use('/:coupleId/tasks', requireCouple, taskRoutes)
 router.use('/:coupleId/events', requireCouple, eventRoutes)

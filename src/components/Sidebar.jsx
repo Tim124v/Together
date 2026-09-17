@@ -1,4 +1,6 @@
-import { FiCalendar, FiCheckSquare, FiClock, FiDollarSign, FiGrid, FiHeart, FiPlus, FiX } from 'react-icons/fi'
+import { useMemo } from 'react'
+import { FiCalendar, FiCheckSquare, FiClock, FiDollarSign, FiGrid, FiHeart, FiPlus, FiSettings, FiX } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
@@ -6,19 +8,45 @@ import { cx } from '../utils/helpers'
 import { AvatarPair } from './shared/Avatar'
 import ProgressBar from './shared/ProgressBar'
 
+export function useNavItems() {
+  const { t } = useTranslation()
+  return useMemo(
+    () => [
+      { id: 'dashboard', label: t('nav.dashboard'), short: t('nav.dashboardShort'), hint: t('nav.dashboardHint'), icon: FiGrid, to: '/' },
+      { id: 'tasks', label: t('nav.tasks'), short: t('nav.tasks'), hint: t('nav.tasksHint'), icon: FiCheckSquare, to: '/tasks' },
+      { id: 'calendar', label: t('nav.calendar'), short: t('nav.calendar'), hint: t('nav.calendarHint'), icon: FiCalendar, to: '/calendar' },
+      { id: 'wishes', label: t('nav.wishes'), short: t('nav.wishes'), hint: t('nav.wishesHint'), icon: FiHeart, to: '/wishes' },
+      { id: 'capsules', label: t('nav.capsules'), short: t('nav.capsules'), hint: t('nav.capsulesHint'), icon: FiClock, to: '/capsules' },
+      { id: 'budget', label: t('nav.budget'), short: t('nav.budget'), hint: t('nav.budgetHint'), icon: FiDollarSign, to: '/budget' },
+    ],
+    [t],
+  )
+}
+
+export function useSidebarItems() {
+  const { t } = useTranslation()
+  const nav = useNavItems()
+  return useMemo(
+    () => [...nav, { id: 'settings', label: t('nav.settings'), short: t('nav.settingsShort'), hint: t('nav.settingsHint'), icon: FiSettings, to: '/settings' }],
+    [nav, t],
+  )
+}
+
 export const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', short: 'Главная', hint: 'Главный экран', icon: FiGrid, to: '/' },
-  { id: 'tasks', label: 'Задачи', short: 'Задачи', hint: 'Общий канбан', icon: FiCheckSquare, to: '/tasks' },
-  { id: 'calendar', label: 'Календарь', short: 'Календарь', hint: 'События вдвоём', icon: FiCalendar, to: '/calendar' },
-  { id: 'wishes', label: 'Мечты', short: 'Мечты', hint: 'Список желаний', icon: FiHeart, to: '/wishes' },
-  { id: 'capsules', label: 'Капсулы', short: 'Капсулы', hint: 'Архив памяти', icon: FiClock, to: '/capsules' },
-  { id: 'budget', label: 'Бюджет', short: 'Бюджет', hint: 'Общие расходы', icon: FiDollarSign, to: '/budget' },
+  { id: 'dashboard', icon: FiGrid, to: '/' },
+  { id: 'tasks', icon: FiCheckSquare, to: '/tasks' },
+  { id: 'calendar', icon: FiCalendar, to: '/calendar' },
+  { id: 'wishes', icon: FiHeart, to: '/wishes' },
+  { id: 'capsules', icon: FiClock, to: '/capsules' },
+  { id: 'budget', icon: FiDollarSign, to: '/budget' },
 ]
 
 export default function Sidebar({ mobileOpen, onClose }) {
+  const { t } = useTranslation()
   const { page, tasks, events, wishes, capsules, expenses, openModal, stats } = useApp()
   const { couple } = useAuth()
   const navigate = useNavigate()
+  const SIDEBAR_ITEMS = useSidebarItems()
 
   const counters = {
     dashboard: null,
@@ -27,6 +55,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
     wishes: wishes.length,
     capsules: capsules?.length || 0,
     budget: expenses?.length || 0,
+    settings: null,
   }
 
   const doneShare = tasks.length
@@ -36,11 +65,11 @@ export default function Sidebar({ mobileOpen, onClose }) {
   const content = (
     <div className="flex h-full flex-col gap-6 p-4">
       <div className="flex items-center justify-between lg:hidden">
-        <p className="px-2 text-sm font-bold">Навигация</p>
+        <p className="px-2 text-sm font-bold">{t('nav.navigation')}</p>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Закрыть меню"
+          aria-label={t('common.close')}
           className="grid h-9 w-9 place-items-center rounded-xl text-slate-400 hover:bg-slate-900/5 dark:hover:bg-white/10"
         >
           <FiX />
@@ -48,7 +77,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
       </div>
 
       <nav className="space-y-1.5">
-        {NAV_ITEMS.map(({ id, label, hint, icon: Icon, to }) => {
+        {SIDEBAR_ITEMS.map(({ id, label, hint, icon: Icon, to }) => {
           const active = page === id
           return (
             <button
@@ -98,13 +127,13 @@ export default function Sidebar({ mobileOpen, onClose }) {
 
       <div className="surface-muted p-4">
         <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Быстро добавить
+            {t('nav.quickAdd')}
         </p>
         <div className="space-y-2">
           {[
-            { label: 'Задачу', modal: 'task', accent: 'text-both' },
-            { label: 'Событие', modal: 'event', accent: 'text-him' },
-            { label: 'Желание', modal: 'wish', accent: 'text-her' },
+            { label: t('nav.addTask'), modal: 'task', accent: 'text-both' },
+            { label: t('nav.addEvent'), modal: 'event', accent: 'text-him' },
+            { label: t('nav.addWish'), modal: 'wish', accent: 'text-her' },
           ].map((item) => (
             <button
               key={item.modal}
@@ -122,16 +151,27 @@ export default function Sidebar({ mobileOpen, onClose }) {
         </div>
       </div>
 
-      <div className="mt-auto rounded-2xl bg-grad-night p-4 text-white shadow-lift">
+      <div
+        className="mt-auto cursor-pointer rounded-2xl bg-grad-night p-4 text-white shadow-lift"
+        onClick={() => {
+          navigate('/settings')
+          onClose?.()
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') navigate('/settings')
+        }}
+        role="button"
+        tabIndex={0}
+      >
         <div className="mb-3 flex items-center justify-between">
           <AvatarPair size="sm" />
           <span className="text-lg animate-float">💞</span>
         </div>
         <p className="text-sm font-bold leading-tight">{couple?.coupleName || 'Together'}</p>
-        <p className="mt-0.5 text-[11px] text-white/60">{stats.daysTogether} дней вместе</p>
+        <p className="mt-0.5 text-[11px] text-white/60">{t('header.daysTogether', { count: stats.daysTogether })}</p>
         <div className="mt-4">
           <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-white/70">
-            <span>Задачи недели</span>
+            <span>{t('nav.tasksWeek')}</span>
             <span className="tabular-nums">{doneShare}%</span>
           </div>
           <ProgressBar value={doneShare} owner="both" />

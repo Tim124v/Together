@@ -1,8 +1,10 @@
 import { useEffect } from 'react'
 import { FiX } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
 import { cx } from '../../utils/helpers'
 
 export default function Modal({ open, onClose, title, subtitle, children, footer, icon: Icon }) {
+  const { t } = useTranslation()
   useEffect(() => {
     if (!open) return undefined
     const onKey = (e) => e.key === 'Escape' && onClose()
@@ -44,7 +46,7 @@ export default function Modal({ open, onClose, title, subtitle, children, footer
           <button
             type="button"
             onClick={onClose}
-            aria-label="Закрыть"
+            aria-label={t('common.close')}
             className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-900/5 hover:text-ink dark:hover:bg-white/10 dark:hover:text-white"
           >
             <FiX />

@@ -1,14 +1,16 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { useTranslation } from 'react-i18next'
 import Card, { CardHeader } from '../shared/Card'
 import { formatMoney } from '../../utils/budget'
 
 function CategoryPie({ title, subtitle, data }) {
+  const { t } = useTranslation()
   const rows = (data || []).filter((row) => row.amount > 0)
   return (
     <Card>
       <CardHeader title={title} subtitle={subtitle} />
       {rows.length === 0 ? (
-        <p className="py-10 text-center text-sm text-slate-500">Пока нет расходов в этом срезе</p>
+        <p className="py-10 text-center text-sm text-slate-500">{t('budget.noSlice')}</p>
       ) : (
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
@@ -43,10 +45,11 @@ function CategoryPie({ title, subtitle, data }) {
 }
 
 export default function BudgetCharts({ his, hers }) {
+  const { t } = useTranslation()
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <CategoryPie title="Его расходы" subtitle="По категориям, кто платил — он" data={his} />
-      <CategoryPie title="Её расходы" subtitle="По категориям, кто платил — она" data={hers} />
+      <CategoryPie title={t('budget.hisExpenses')} subtitle={t('budget.byCategoryHe')} data={his} />
+      <CategoryPie title={t('budget.herExpenses')} subtitle={t('budget.byCategoryShe')} data={hers} />
     </div>
   )
 }

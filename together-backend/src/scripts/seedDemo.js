@@ -36,6 +36,8 @@ if (!couple) {
     coupleName: 'Артём & Катя',
     startDate: start.toISOString().slice(0, 10),
     inviteCode: 'TOGETHER1',
+    inviteCodeAt: new Date(),
+    partnerJoinedAt: new Date(),
   })
 }
 

@@ -11,6 +11,7 @@ import { eventItemRoutes } from './routes/events.js'
 import { wishItemRoutes } from './routes/wishes.js'
 import { capsuleItemRoutes } from './routes/capsules.js'
 import { budgetItemRoutes } from './routes/budget.js'
+import { currencyRoutes, geolocationRoutes, userLocaleRoutes } from './routes/locale.js'
 import { openApiSpec } from './docs/openapi.js'
 
 export function createApp() {
@@ -21,13 +22,16 @@ export function createApp() {
   app.use(express.json({ limit: '12mb' }))
 
   app.get('/health', (_req, res) => {
-    res.json({ ok: true, service: 'together-backend', version: '1.3.0' })
+    res.json({ ok: true, service: 'together-backend', version: '1.5.0' })
   })
 
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec, { customSiteTitle: 'Together API' }))
   app.get('/api/docs.json', (_req, res) => res.json(openApiSpec))
 
   app.use('/api/auth', authRoutes)
+  app.use('/api/users', userLocaleRoutes)
+  app.use('/api/geolocation', geolocationRoutes)
+  app.use('/api/currencies', currencyRoutes)
   app.use('/api/couples', coupleRoutes)
   app.use('/api/tasks', taskItemRoutes)
   app.use('/api/events', eventItemRoutes)

@@ -74,7 +74,11 @@ Access JWT живёт 24 часа, refresh — 30 дней (хранится к�
 `POST /api/couples/join` `{ inviteCode }`  
 `GET /api/couples/current`  
 `GET /api/couples/:id`  
-`PUT /api/couples/:id`
+`PUT /api/couples/:id` — имя пары и дата встречи (оба участника)  
+`GET /api/couples/:id/invite-code`  
+`POST /api/couples/:id/regenerate-code` — старый код перестаёт действовать  
+`GET /api/couples/:id/partner-info` — партнёр или `{ status: 'waiting' }`  
+`POST /api/couples/:id/leave`
 
 `user1` = «он» (синий), `user2` = «она» (розовый). `assignedTo: null` у задачи = общее.
 
@@ -147,6 +151,11 @@ socket.on('capsule:opened', (capsule) => {})
 socket.on('capsule:deleted', ({ capsuleId }) => {})
 socket.on('expense:created', (expense) => {})
 socket.on('expense:deleted', ({ itemId }) => {})
+socket.on('couple:updated', (couple) => {})
+socket.on('couple:partner-connected', ({ partner, couple }) => {})
+socket.on('couple:partner-disconnected', () => {})
+socket.on('couple:code-regenerated', ({ inviteCode, couple }) => {})
+socket.on('couple:code-invalid', () => {})
 ```
 
 События уходят только в комнату своей пары (`couple:<id>`). Те же объекты приходят и после REST-запросов — партнёр видит изменения без перезагрузки.

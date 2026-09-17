@@ -1,20 +1,44 @@
 import { useMemo, useState } from 'react'
 import { FiCheck, FiClock, FiMove, FiPlus, FiTrash2 } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
 import { useApp } from '../context/AppContext'
-import { taskColumns } from '../data/mockData'
 import { cx, ownerStyle, relativeDate, todayISO } from '../utils/helpers'
 import Avatar from './shared/Avatar'
 import Button from './shared/Button'
 import Card from './shared/Card'
 
-const FILTERS = [
-  { id: 'all', label: 'Все', emoji: '🌐' },
-  { id: 'he', label: 'Мне', emoji: '🧑‍💻' },
-  { id: 'she', label: 'Ей', emoji: '💃' },
-  { id: 'both', label: 'Общее', emoji: '💞' },
-]
+function TaskFilters({ filter, setFilter }) {
+  const { t } = useTranslation()
+  const FILTERS = [
+    { id: 'all', label: t('tasks.filterAll'), emoji: '🌐' },
+    { id: 'he', label: t('tasks.filterMine'), emoji: '🧑‍💻' },
+    { id: 'she', label: t('tasks.filterHers'), emoji: '💃' },
+    { id: 'both', label: t('tasks.filterShared'), emoji: '💞' },
+  ]
+  return (
+    <div className="flex gap-1 rounded-xl bg-slate-100/80 p-1 dark:bg-white/[0.06]">
+      {FILTERS.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => setFilter(item.id)}
+          className={cx(
+            'flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all duration-200',
+            filter === item.id
+              ? 'bg-white text-brand-600 shadow-soft dark:bg-white/12 dark:text-white'
+              : 'text-slate-500 hover:text-ink dark:text-slate-400 dark:hover:text-white',
+          )}
+        >
+          <span>{item.emoji}</span>
+          {item.label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 function TaskCard({ task, onDragStart, onDragEnd, dragging }) {
+  const { t } = useTranslation()
   const { toggleTask, removeTask, users } = useApp()
   const style = ownerStyle(task.assigned)
   const done = task.status === 'done'
@@ -39,7 +63,7 @@ function TaskCard({ task, onDragStart, onDragEnd, dragging }) {
         <button
           type="button"
           onClick={() => toggleTask(task.id)}
-          aria-label="Завершено"
+          aria-label={t('tasks.doneAria')}
           className={cx(
             'mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 transition-all duration-200',
             done
@@ -67,7 +91,7 @@ function TaskCard({ task, onDragStart, onDragEnd, dragging }) {
           <button
             type="button"
             onClick={() => removeTask(task.id)}
-            aria-label="Удалить"
+            aria-label={t('common.delete')}
             className="grid h-6 w-6 place-items-center rounded-lg text-slate-300 transition hover:bg-rose-500/10 hover:text-rose-500"
           >
             <FiTrash2 className="text-xs" />
@@ -95,6 +119,7 @@ function TaskCard({ task, onDragStart, onDragEnd, dragging }) {
 }
 
 function Column({ column, tasks, dragId, onDragStart, onDragEnd, onDrop }) {
+  const { t } = useTranslation()
   const [over, setOver] = useState(false)
   const { openModal } = useApp()
 
@@ -147,7 +172,7 @@ function Column({ column, tasks, dragId, onDragStart, onDragEnd, onDrop }) {
 
         {tasks.length === 0 && (
           <div className="grid place-items-center rounded-2xl border-2 border-dashed border-slate-200 py-10 text-center dark:border-white/10">
-            <p className="text-xs font-semibold text-slate-400">Перетащите задачу сюда</p>
+            <p className="text-xs font-semibold text-slate-400">{t('tasks.dropHere')}</p>
           </div>
         )}
       </div>
@@ -158,7 +183,7 @@ function Column({ column, tasks, dragId, onDragStart, onDragEnd, onDrop }) {
           onClick={() => openModal('task')}
           className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 py-2.5 text-xs font-bold text-slate-400 transition hover:border-brand/50 hover:text-brand-500 dark:border-white/10"
         >
-          <FiPlus /> Добавить задачу
+          <FiPlus /> {t('tasks.add')}
         </button>
       )}
     </div>
@@ -166,6 +191,7 @@ function Column({ column, tasks, dragId, onDragStart, onDragEnd, onDrop }) {
 }
 
 export default function TaskBoard() {
+  const { t } = useTranslation()
   const { tasks, moveTask, openModal } = useApp()
   const [filter, setFilter] = useState('all')
   const [dragId, setDragId] = useState(null)
@@ -192,39 +218,28 @@ export default function TaskBoard() {
     <div className="page-enter space-y-5">
       <Card className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">Общие задачи</h1>
+          <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">{t('tasks.title')}</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Перетаскивайте карточки между колонками · выполнено {doneCount} из {tasks.length}
+            {t('tasks.subtitle', { done: doneCount, total: tasks.length })}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex gap-1 rounded-xl bg-slate-100/80 p-1 dark:bg-white/[0.06]">
-            {FILTERS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setFilter(item.id)}
-                className={cx(
-                  'flex h-9 items-center gap-1.5 rounded-lg px-3 text-xs font-bold transition-all duration-200',
-                  filter === item.id
-                    ? 'bg-white text-brand-600 shadow-soft dark:bg-white/12 dark:text-white'
-                    : 'text-slate-500 hover:text-ink dark:text-slate-400 dark:hover:text-white',
-                )}
-              >
-                <span>{item.emoji}</span>
-                {item.label}
-              </button>
-            ))}
-          </div>
+          <TaskFilters filter={filter} setFilter={setFilter} />
           <Button icon={FiPlus} onClick={() => openModal('task')}>
-            Добавить задачу
+            {t('tasks.add')}
           </Button>
         </div>
       </Card>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {taskColumns.map((column) => (
+        {['todo', 'in-progress', 'done'].map((id) => {
+          const column = {
+            id,
+            label: t(`tasks.${id === 'in-progress' ? 'inProgress' : id}`),
+            hint: t(`tasks.${id === 'in-progress' ? 'inProgressHint' : `${id}Hint`}`),
+          }
+          return (
           <Column
             key={column.id}
             column={column}
@@ -234,7 +249,8 @@ export default function TaskBoard() {
             onDragEnd={() => setDragId(null)}
             onDrop={handleDrop}
           />
-        ))}
+          )
+        })}
       </div>
     </div>
   )

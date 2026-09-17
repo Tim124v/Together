@@ -2,7 +2,7 @@ import { cx } from '../../utils/helpers'
 
 const VARIANTS = {
   primary:
-    'bg-grad-brand text-white shadow-glow hover:brightness-[1.06] active:brightness-95',
+    'bg-brand-600 text-white shadow-glow hover:bg-brand-700 active:bg-brand-800',
   soft:
     'bg-brand/10 text-brand-600 hover:bg-brand/16 dark:bg-brand/20 dark:text-brand-200 dark:hover:bg-brand/28',
   ghost:
@@ -33,7 +33,7 @@ export default function Button({
       type={type}
       className={cx(
         'inline-flex items-center justify-center gap-2 rounded-xl font-semibold tracking-tight transition-all duration-200',
-        'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/25 disabled:pointer-events-none disabled:opacity-50',
+        'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/25 disabled:pointer-events-none disabled:opacity-70 disabled:text-white',
         'active:scale-[0.97]',
         VARIANTS[variant],
         SIZES[size],

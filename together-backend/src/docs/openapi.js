@@ -8,8 +8,8 @@ export const openApiSpec = {
   openapi: '3.0.3',
   info: {
     title: 'Together API',
-    version: '1.3.0',
-    description: 'REST + JWT для задач, календаря, мечт, капсул времени и общего бюджета. Real-time — Socket.io на том же порту.',
+    version: '1.5.0',
+    description: 'REST + JWT для задач, календаря, мечт, капсул времени, общего бюджета и локали. Real-time — Socket.io на том же порту.',
   },
   servers: [{ url: server }],
   components: {
@@ -62,7 +62,19 @@ export const openApiSpec = {
     '/api/couples/current': { get: { summary: 'Моя пара', responses: { 200: { description: 'Couple' } } } },
     '/api/couples/{id}': {
       get: { summary: 'Информация о паре', parameters: [{ name: 'id', in: 'path', required: true }], responses: { 200: { description: 'Couple' } } },
-      put: { summary: 'Обновить пару', parameters: [{ name: 'id', in: 'path', required: true }], responses: { 200: { description: 'Couple' } } },
+      put: { summary: 'Обновить имя и дату встречи', parameters: [{ name: 'id', in: 'path', required: true }], responses: { 200: { description: 'Couple' } } },
+    },
+    '/api/couples/{id}/invite-code': {
+      get: { summary: 'Код приглашения (создаётся, если его ещё нет)', parameters: [{ name: 'id', in: 'path', required: true }], responses: { 200: { description: '{ inviteCode }' } } },
+    },
+    '/api/couples/{id}/regenerate-code': {
+      post: { summary: 'Новый код; старый перестаёт действовать', parameters: [{ name: 'id', in: 'path', required: true }], responses: { 200: { description: '{ inviteCode, couple }' } } },
+    },
+    '/api/couples/{id}/partner-info': {
+      get: { summary: 'Партнёр или статус waiting', parameters: [{ name: 'id', in: 'path', required: true }], responses: { 200: { description: 'Partner | { status: waiting }' } } },
+    },
+    '/api/couples/{id}/leave': {
+      post: { summary: 'Выйти из пары', parameters: [{ name: 'id', in: 'path', required: true }], responses: { 200: { description: '{ ok, dissolved }' } } },
     },
     '/api/couples/{coupleId}/tasks': {
       get: { summary: 'Все задачи пары', parameters: [{ name: 'coupleId', in: 'path', required: true }], responses: { 200: { description: 'Task[]' } } },
@@ -138,6 +150,28 @@ export const openApiSpec = {
     },
     '/api/budget-items/{itemId}/settle': {
       post: { summary: 'Отметить расход как рассчитанный', parameters: [{ name: 'itemId', in: 'path', required: true }], responses: { 200: { description: 'Expense' } } },
+    },
+    '/api/users/locale': {
+      get: { summary: 'Язык, валюта и страна пользователя', responses: { 200: { description: '{ language, currency, country }' } } },
+      put: {
+        summary: 'Обновить language и/или currency',
+        requestBody: { content: { 'application/json': { schema: { example: { language: 'en', currency: 'USD' } } } } },
+        responses: { 200: { description: 'locale + user' } },
+      },
+    },
+    '/api/geolocation': {
+      get: {
+        security: [],
+        summary: 'Страна/язык/валюта по IP-заголовкам и Accept-Language',
+        responses: { 200: { description: '{ country, language, currency, currencies }' } },
+      },
+    },
+    '/api/currencies/rates': {
+      get: {
+        security: [],
+        summary: 'Статические курсы валют (MVP, без live FX)',
+        responses: { 200: { description: '{ rates, base }' } },
+      },
     },
   },
 }

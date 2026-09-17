@@ -19,7 +19,7 @@ const upsert = (list, item) => {
 }
 
 export function DataProvider({ children }) {
-  const { couple, user } = useAuth()
+  const { couple, user, setCouple, setUser, refreshSession } = useAuth()
   const [tasks, setTasks] = useState([])
   const [events, setEvents] = useState([])
   const [wishes, setWishes] = useState([])
@@ -114,6 +114,40 @@ export function DataProvider({ children }) {
         return [...set]
       })
     }
+    const onCoupleUpdated = (payload) => {
+      const next = payload?.couple || payload
+      if (next?.id) setCouple(next)
+    }
+    const onPartnerConnected = (payload) => {
+      if (payload?.couple) setCouple(payload.couple)
+      else refreshSession()
+    }
+    const onCodeRegen = (payload) => {
+      if (payload?.couple) setCouple(payload.couple)
+      else if (payload?.inviteCode || payload?.new_code) {
+        const code = payload.inviteCode || payload.new_code
+        setCouple((prev) => (prev ? { ...prev, inviteCode: code, code } : prev))
+      }
+    }
+    const onPartnerLeft = () => {
+      refreshSession()
+    }
+    const onLocaleChanged = (payload) => {
+      if (!payload) return
+      setUser((prev) => {
+        if (!prev) return prev
+        const next = { ...prev, currency: payload.currency || prev.currency }
+        if (payload.userId === prev.id && payload.language) next.language = payload.language
+        return next
+      })
+      if (payload.currency) {
+        try {
+          localStorage.setItem('together-currency', payload.currency)
+        } catch {
+          /* ignore */
+        }
+      }
+    }
 
     socket.on('task:created', onTaskCreated)
     socket.on('task:updated', onTaskUpdated)
@@ -132,6 +166,11 @@ export function DataProvider({ children }) {
     socket.on('expense:created', onExpenseCreated)
     socket.on('expense:updated', onExpenseUpdated)
     socket.on('expense:deleted', onExpenseDeleted)
+    socket.on('couple:updated', onCoupleUpdated)
+    socket.on('couple:partner-connected', onPartnerConnected)
+    socket.on('couple:code-regenerated', onCodeRegen)
+    socket.on('couple:partner-disconnected', onPartnerLeft)
+    socket.on('user:locale-changed', onLocaleChanged)
 
     return () => {
       socket.off('task:created', onTaskCreated)
@@ -151,8 +190,13 @@ export function DataProvider({ children }) {
       socket.off('expense:created', onExpenseCreated)
       socket.off('expense:updated', onExpenseUpdated)
       socket.off('expense:deleted', onExpenseDeleted)
+      socket.off('couple:updated', onCoupleUpdated)
+      socket.off('couple:partner-connected', onPartnerConnected)
+      socket.off('couple:code-regenerated', onCodeRegen)
+      socket.off('couple:partner-disconnected', onPartnerLeft)
+      socket.off('user:locale-changed', onLocaleChanged)
     }
-  }, [couple?.id])
+  }, [couple?.id, user?.id, setCouple, setUser, refreshSession])
 
   const createTask = useCallback(
     async (title, assignedTo, dueDate, color) => {

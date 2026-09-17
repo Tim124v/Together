@@ -48,6 +48,8 @@ const couple = await Couple.create({
   coupleName: 'Артём & Катя',
   startDate: start.toISOString().slice(0, 10),
   inviteCode: 'TOGETHER1',
+  inviteCodeAt: new Date(),
+  partnerJoinedAt: new Date(),
 })
 
 const tasks = [

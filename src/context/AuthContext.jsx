@@ -12,6 +12,10 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [ready, setReady] = useState(false)
 
+  const updateUser = useCallback((patch) => {
+    setUser((prev) => (prev ? { ...prev, ...patch } : prev))
+  }, [])
+
   const applySession = (data) => {
     if (data.accessToken) storage.setTokens(data.accessToken, data.refreshToken)
     if (data.user) setUser(data.user)
@@ -51,10 +55,10 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  const register = useCallback(async ({ name, email, password, avatarColor }) => {
+  const register = useCallback(async ({ name, email, password, avatarColor, language, currency, country }) => {
     setLoading(true)
     try {
-      return applySession(await authApi.register({ name, email, password, avatarColor }))
+      return applySession(await authApi.register({ name, email, password, avatarColor, language, currency, country }))
     } finally {
       setLoading(false)
     }
@@ -79,6 +83,28 @@ export function AuthProvider({ children }) {
     return joined
   }, [])
 
+  const updateCouple = useCallback(async (payload) => {
+    if (!couple?.id) return null
+    const updated = await coupleApi.update(couple.id, payload)
+    setCouple(updated)
+    return updated
+  }, [couple?.id])
+
+  const regenerateInviteCode = useCallback(async () => {
+    if (!couple?.id) return null
+    const data = await coupleApi.regenerateCode(couple.id)
+    if (data.couple) setCouple(data.couple)
+    else setCouple((prev) => (prev ? { ...prev, inviteCode: data.inviteCode, code: data.inviteCode } : prev))
+    return data
+  }, [couple?.id])
+
+  const leaveCouple = useCallback(async () => {
+    if (!couple?.id) return null
+    const result = await coupleApi.leave(couple.id)
+    setCouple(null)
+    return result
+  }, [couple?.id])
+
   const logout = useCallback(() => {
     disconnectSocket()
     storage.clear()
@@ -100,10 +126,15 @@ export function AuthProvider({ children }) {
       refreshSession,
       createCouple,
       joinCouple,
+      updateCouple,
+      regenerateInviteCode,
+      leaveCouple,
       setCouple,
+      setUser,
+      updateUser,
       errorMessage: apiError,
     }),
-    [user, couple, loading, ready, login, register, logout, refreshSession, createCouple, joinCouple],
+    [user, couple, loading, ready, login, register, logout, refreshSession, createCouple, joinCouple, updateCouple, regenerateInviteCode, leaveCouple, updateUser],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

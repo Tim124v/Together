@@ -1,10 +1,11 @@
 import { cx, ownerStyle } from '../../utils/helpers'
-import { users } from '../../data/mockData'
+import { useTranslation } from 'react-i18next'
 
 const OWNERS = ['he', 'she', 'both']
+const EMOJI = { he: '🧑‍💻', she: '💃', both: '💞' }
 
-/** Сегментированный выбор «Вы / Она / Общее» — используется в модалках и фильтрах */
 export default function OwnerPicker({ value, onChange, options = OWNERS, size = 'md', className }) {
+  const { t } = useTranslation()
   return (
     <div
       className={cx(
@@ -28,8 +29,8 @@ export default function OwnerPicker({ value, onChange, options = OWNERS, size = 
                 : 'text-slate-500 hover:text-ink dark:text-slate-400 dark:hover:text-white',
             )}
           >
-            <span>{users[owner].emoji}</span>
-            {style.label}
+            <span>{EMOJI[owner]}</span>
+            {t(`owner.${owner}`)}
           </button>
         )
       })}

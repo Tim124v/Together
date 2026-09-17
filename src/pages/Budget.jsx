@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { FiPlus } from 'react-icons/fi'
+import { useTranslation } from 'react-i18next'
 import AddExpenseModal from '../components/Budget/AddExpenseModal'
 import BudgetCharts from '../components/Budget/BudgetCharts'
 import BudgetStats from '../components/Budget/BudgetStats'
@@ -23,6 +24,7 @@ function byPayerCategories(expenses, paidBy, categories) {
 }
 
 export default function Budget() {
+  const { t } = useTranslation()
   const { users } = useApp()
   const { expenses, budgetCategories, createExpense, settleExpense, deleteExpense } = useData()
   const [month, setMonth] = useState(todayISO().slice(0, 7))
@@ -45,11 +47,9 @@ export default function Budget() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-500">Общий бюджет</p>
-          <h1 className="text-2xl font-extrabold tracking-tight">Shared Budget</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            Кто что оплатил и кто кому должен в этом месяце.
-          </p>
+          <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-500">{t('budget.kicker')}</p>
+          <h1 className="text-2xl font-extrabold tracking-tight">{t('budget.title')}</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t('budget.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <input
@@ -59,7 +59,7 @@ export default function Budget() {
             className="field !w-auto"
           />
           <Button icon={FiPlus} onClick={() => setOpen(true)}>
-            Добавить расход
+            {t('budget.addExpense')}
           </Button>
         </div>
       </div>
@@ -75,7 +75,7 @@ export default function Budget() {
         categories={budgetCategories}
         onSettle={settleExpense}
         onDelete={(id) => {
-          if (window.confirm('Удалить этот расход?')) deleteExpense(id)
+          if (window.confirm(t('budget.deleteConfirm'))) deleteExpense(id)
         }}
       />
 

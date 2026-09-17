@@ -1,17 +1,42 @@
+import i18n from '../i18n/config'
+import { CURRENCY_STORAGE_KEY, intlLocale } from '../i18n/languages'
+
 export const BUDGET_CATEGORIES = [
-  { slug: 'groceries', name: 'Продукты', icon: '🛒', color: '#10b981' },
-  { slug: 'entertainment', name: 'Развлечения', icon: '🍔', color: '#f59e0b' },
-  { slug: 'transport', name: 'Транспорт', icon: '✈️', color: '#3b82f6' },
-  { slug: 'home', name: 'Дом', icon: '🏠', color: '#8b5cf6' },
-  { slug: 'other', name: 'Другое', icon: '💰', color: '#64748b' },
+  { slug: 'groceries', icon: '🛒', color: '#10b981' },
+  { slug: 'entertainment', icon: '🍔', color: '#f59e0b' },
+  { slug: 'transport', icon: '✈️', color: '#3b82f6' },
+  { slug: 'home', icon: '🏠', color: '#8b5cf6' },
+  { slug: 'other', icon: '💰', color: '#64748b' },
 ]
 
-export const categoryMeta = (slug, extras = []) =>
-  extras.find((c) => c.slug === slug) || BUDGET_CATEGORIES.find((c) => c.slug === slug) || BUDGET_CATEGORIES[4]
+export const categoryMeta = (slug, extras = []) => {
+  const found = extras.find((c) => c.slug === slug) || BUDGET_CATEGORIES.find((c) => c.slug === slug) || BUDGET_CATEGORIES[4]
+  return {
+    ...found,
+    name: found.name || i18n.t(`budget.${found.slug || 'other'}`),
+  }
+}
 
-export const formatMoney = (value) => {
+export function getActiveCurrency() {
+  try {
+    return localStorage.getItem(CURRENCY_STORAGE_KEY) || 'USD'
+  } catch {
+    return 'USD'
+  }
+}
+
+export const formatMoney = (value, currency) => {
   const n = Number(value) || 0
-  return `${n.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₽`
+  const code = currency || getActiveCurrency()
+  try {
+    return new Intl.NumberFormat(intlLocale(i18n.language), {
+      style: 'currency',
+      currency: code,
+      maximumFractionDigits: 2,
+    }).format(n)
+  } catch {
+    return `${n.toLocaleString(intlLocale(i18n.language))} ${i18n.t(`currency.${code}`, { defaultValue: code })}`
+  }
 }
 
 const money = (value) => Math.round((Number(value) || 0) * 100) / 100
@@ -53,17 +78,17 @@ export function computeBalance(expenses, users) {
     heNet += hePaid - heShare
   }
   heNet = money(heNet)
-  const heName = users?.he?.name || 'Он'
-  const sheName = users?.she?.name || 'Она'
+  const heName = users?.he?.name || i18n.t('budget.he')
+  const sheName = users?.she?.name || i18n.t('budget.she')
   if (Math.abs(heNet) < 0.01) {
-    return { amount: 0, debtor: null, creditor: null, message: 'Вы в расчёте', settled: true }
+    return { amount: 0, debtor: null, creditor: null, message: i18n.t('budget.settled'), settled: true }
   }
   if (heNet > 0) {
     return {
       amount: heNet,
       debtor: 'she',
       creditor: 'he',
-      message: `${sheName} должна ${heName}: ${formatMoney(heNet)}`,
+      message: i18n.t('budget.owes', { debtor: sheName, creditor: heName, amount: formatMoney(heNet) }),
       settled: false,
     }
   }
@@ -72,17 +97,17 @@ export function computeBalance(expenses, users) {
     amount,
     debtor: 'he',
     creditor: 'she',
-    message: `${heName} должен ${sheName}: ${formatMoney(amount)}`,
+    message: i18n.t('budget.owes', { debtor: heName, creditor: sheName, amount: formatMoney(amount) }),
     settled: false,
   }
 }
 
 export function payerLabel(paidBy, users) {
-  if (paidBy === 'both') return 'Вместе'
+  if (paidBy === 'both') return i18n.t('budget.together')
   return users?.[paidBy]?.name || paidBy
 }
 
 export function splitLabel(item) {
   if (item.splitType === 'custom') return `${item.hePercent ?? 50} / ${item.shePercent ?? 50}`
-  return 'Поровну'
+  return i18n.t('budget.equally')
 }

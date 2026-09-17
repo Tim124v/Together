@@ -5,7 +5,7 @@ import { toPublicUser } from '../models/User.js'
 import { asyncHandler } from '../middleware/errorHandler.js'
 
 export const registerUser = asyncHandler(async (req, res) => {
-  const result = await register(req.body)
+  const result = await register(req.body, req)
   res.status(201).json(result)
 })
 

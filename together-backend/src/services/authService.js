@@ -6,6 +6,7 @@ import { RefreshToken, User } from '../models/index.js'
 import { findCoupleForUser, toPublicCouple } from './coupleService.js'
 import { conflict, unauthorized } from '../utils/httpError.js'
 import { toPublicUser } from '../models/User.js'
+import { detectRequestLocale } from '../config/locale.js'
 
 async function withCouple(user, tokens) {
   const couple = await findCoupleForUser(user.id)
@@ -49,16 +50,20 @@ export async function issueTokens(user) {
   return { accessToken, refreshToken, expiresIn: jwtConfig.accessExpires }
 }
 
-export async function register({ email, password, name, avatarColor }) {
+export async function register({ email, password, name, avatarColor, language, currency, country }, req) {
   const exists = await User.findOne({ where: { email } })
   if (exists) throw conflict('Пользователь с таким email уже есть')
 
+  const detected = detectRequestLocale(req || { headers: {} })
   const passwordHash = await bcrypt.hash(password, Number(process.env.BCRYPT_ROUNDS || 10))
   const user = await User.create({
     email,
     passwordHash,
     name,
     avatarColor: avatarColor || 'green',
+    language: language || detected.language || 'en',
+    currency: currency || detected.currency || 'USD',
+    country: country || detected.country || null,
   })
 
   return withCouple(user, await issueTokens(user))

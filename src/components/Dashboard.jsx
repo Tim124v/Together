@@ -9,11 +9,13 @@ import {
   FiTrendingUp,
 } from 'react-icons/fi'
 import { HiOutlineSparkles } from 'react-icons/hi2'
+import { useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
-import { cx, formatDate, ownerStyle, plural, relativeDate, todayISO } from '../utils/helpers'
+import { cx, formatDate, ownerStyle, relativeDate, todayISO } from '../utils/helpers'
 import Avatar, { AvatarPair } from './shared/Avatar'
 import Button from './shared/Button'
 import Card, { CardHeader } from './shared/Card'
@@ -52,6 +54,7 @@ function MetricCard({ label, value, caption, icon: Icon, gradient, trend }) {
 }
 
 function HeroBanner() {
+  const { t } = useTranslation()
   const { stats, openModal, anniversaries, users } = useApp()
   const upcoming = [...anniversaries].sort((a, b) => (a.date || '').localeCompare(b.date || ''))
   const nearest = upcoming.find((item) => item.date >= todayISO()) ?? upcoming[0]
@@ -63,15 +66,18 @@ function HeroBanner() {
       <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="max-w-lg">
           <span className="chip bg-white/20 text-white backdrop-blur">
-            <HiOutlineSparkles /> Ваш день вдвоём
+            <HiOutlineSparkles /> {t('dashboard.heroChip')}
           </span>
           <h1 className="mt-4 text-2xl font-extrabold leading-tight tracking-tight sm:text-[32px]">
-            Привет, {users.he.name} &amp; {users.she.name} 💞
+            {t('dashboard.hello', { he: users.he.name, she: users.she.name })}
           </h1>
           <p className="mt-2 text-sm text-white/80">
             {stats.todayTasks > 0
-              ? `На сегодня осталось ${stats.todayTasks} ${plural(stats.todayTasks, ['задача', 'задачи', 'задач'])}. И ещё ${stats.goals} ${plural(stats.goals, ['мечта', 'мечты', 'мечт'])} ждут своего шага.`
-              : `Все задачи на сегодня закрыты. Самое время заняться мечтами — их ${stats.goals}.`}
+              ? t('dashboard.remainingToday', {
+                  tasks: `${stats.todayTasks} ${t('time.tasks', { count: stats.todayTasks })}`,
+                  wishes: `${stats.goals} ${t('time.wishes', { count: stats.goals })}`,
+                })
+              : t('dashboard.allDone', { count: stats.goals })}
           </p>
           <div className="mt-5 flex flex-wrap gap-2.5">
             <Button
@@ -80,7 +86,7 @@ function HeroBanner() {
               onClick={() => openModal('task')}
               className="border-none bg-white text-brand-600 shadow-soft hover:bg-white"
             >
-              Новая задача
+              {t('dashboard.newTask')}
             </Button>
             <Button
               variant="soft"
@@ -88,7 +94,7 @@ function HeroBanner() {
               onClick={() => openModal('event')}
               className="bg-white/18 text-white hover:bg-white/28"
             >
-              Событие
+              {t('dashboard.event')}
             </Button>
             <Button
               variant="soft"
@@ -96,7 +102,7 @@ function HeroBanner() {
               onClick={() => openModal('wish')}
               className="bg-white/18 text-white hover:bg-white/28"
             >
-              Желание
+              {t('dashboard.wish')}
             </Button>
           </div>
         </div>
@@ -107,11 +113,11 @@ function HeroBanner() {
             <span className="text-2xl animate-float">{nearest?.emoji || '💞'}</span>
           </div>
           <p className="mt-3.5 text-xs font-semibold uppercase tracking-wide text-white/60">
-            Ближайшая дата
+            {t('dashboard.nearestDate')}
           </p>
-          <p className="mt-1 text-sm font-bold leading-tight">{nearest?.title || 'Пока тихо'}</p>
+          <p className="mt-1 text-sm font-bold leading-tight">{nearest?.title || t('dashboard.quiet')}</p>
           <p className="mt-0.5 text-xs text-white/70">
-            {nearest ? `${formatDate(nearest.date)} · ${relativeDate(nearest.date)}` : 'Добавьте событие'}
+            {nearest ? `${formatDate(nearest.date)} · ${relativeDate(nearest.date)}` : t('dashboard.addEvent')}
           </p>
         </div>
       </div>
@@ -120,6 +126,7 @@ function HeroBanner() {
 }
 
 function TodayTasks() {
+  const { t } = useTranslation()
   const { tasks, toggleTask, setPage } = useApp()
   const today = todayISO()
   const list = tasks.filter((t) => t.dueDate <= today).slice(0, 5)
@@ -128,11 +135,11 @@ function TodayTasks() {
     <Card>
       <CardHeader
         icon={FiCheckCircle}
-        title="Задачи на сегодня"
-        subtitle="Отметьте выполненное — партнёр увидит сразу"
+        title={t('dashboard.tasksToday')}
+        subtitle={t('dashboard.tasksTodaySub')}
         action={
           <Button variant="ghost" size="sm" onClick={() => setPage('tasks')}>
-            Все <FiArrowUpRight />
+            {t('dashboard.seeAll')} <FiArrowUpRight />
           </Button>
         }
       />
@@ -178,11 +185,12 @@ function TodayTasks() {
 }
 
 function ActivityFeed() {
+  const { t } = useTranslation()
   const { activities, users } = useApp()
 
   return (
     <Card>
-      <CardHeader icon={FiTrendingUp} title="Последние активности" subtitle="Что происходило у вас двоих" />
+      <CardHeader icon={FiTrendingUp} title={t('dashboard.latestActivity')} subtitle={t('dashboard.latestActivitySub')} />
       <ol className="relative space-y-4 pl-1">
         <span className="absolute left-[19px] top-2 h-[calc(100%-18px)] w-px bg-slate-200 dark:bg-white/10" />
         {activities.map((item) => {
@@ -200,7 +208,7 @@ function ActivityFeed() {
               </span>
               <div className="min-w-0 pt-1">
                 <p className="text-sm leading-snug">
-                  <span className="font-bold tracking-tight">{users[item.user]?.name || 'Кто-то'}</span>{' '}
+                  <span className="font-bold tracking-tight">{users[item.user]?.name || t('dashboard.someone')}</span>{' '}
                   <span className="text-slate-500 dark:text-slate-400">{item.text}</span>
                 </p>
                 <p className="mt-0.5 text-[11px] text-slate-400">{item.time}</p>
@@ -214,14 +222,15 @@ function ActivityFeed() {
 }
 
 function Anniversaries() {
+  const { t } = useTranslation()
   const { anniversaries } = useApp()
 
   return (
     <Card>
-      <CardHeader icon={FiHeart} title="Памятные даты" subtitle="Не пропустите главное" />
+      <CardHeader icon={FiHeart} title={t('dashboard.dates')} subtitle={t('dashboard.datesSub')} />
       <div className="space-y-2.5">
         {anniversaries.length === 0 && (
-          <p className="text-sm text-slate-400">Памятные даты появятся из общего календаря</p>
+          <p className="text-sm text-slate-400">{t('dashboard.datesEmpty')}</p>
         )}
         {[...anniversaries]
           .sort((a, b) => (a.date || '').localeCompare(b.date || ''))
@@ -249,6 +258,7 @@ function Anniversaries() {
 }
 
 function WishSpotlight() {
+  const { t } = useTranslation()
   const { wishes, setPage } = useApp()
   const top = [...wishes].sort((a, b) => b.progress - a.progress).slice(0, 3)
 
@@ -256,11 +266,11 @@ function WishSpotlight() {
     <Card>
       <CardHeader
         icon={HiOutlineSparkles}
-        title="Мечты в фокусе"
-        subtitle="Ближе всего к исполнению"
+        title={t('dashboard.wishesFocus')}
+        subtitle={t('dashboard.wishesFocusSub')}
         action={
           <Button variant="ghost" size="sm" onClick={() => setPage('wishes')}>
-            Все <FiArrowUpRight />
+            {t('dashboard.seeAll')} <FiArrowUpRight />
           </Button>
         }
       />
@@ -282,7 +292,33 @@ function WishSpotlight() {
   )
 }
 
+function WaitingPartnerBanner() {
+  const { t } = useTranslation()
+  const { couple } = useAuth()
+  const navigate = useNavigate()
+  const waiting = couple && !couple.user2
+  if (!waiting) return null
+  const code = couple.inviteCode || couple.code
+
+  return (
+    <button
+      type="button"
+      onClick={() => navigate('/settings')}
+      className="flex w-full items-center gap-3 rounded-3xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-left transition hover:bg-amber-500/16"
+    >
+      <span className="text-xl">⏳</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-bold">{t('dashboard.waitingPartner')}</span>
+        <span className="block text-xs text-slate-500 dark:text-slate-400">
+          {t('dashboard.waitingPartnerHint', { code })}
+        </span>
+      </span>
+    </button>
+  )
+}
+
 export default function Dashboard() {
+  const { t } = useTranslation()
   const { stats } = useApp()
   const { couple } = useAuth()
   const { loadData } = useData()
@@ -293,34 +329,35 @@ export default function Dashboard() {
 
   return (
     <div className="page-enter space-y-5">
+      <WaitingPartnerBanner />
       <HeroBanner />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
-          label="Задач на сегодня"
+          label={t('dashboard.metricTasks')}
           value={stats.todayTasks}
-          caption={`Из них ${stats.todayShared} ${plural(stats.todayShared, ['общая', 'общие', 'общих'])}`}
+          caption={t('dashboard.sharedOf', { count: stats.todayShared })}
           icon={FiCheckCircle}
           gradient="bg-grad-both"
           trend="+2"
         />
         <MetricCard
-          label="Событий этого месяца"
+          label={t('dashboard.metricEvents')}
           value={stats.monthEvents}
-          caption={`${stats.monthShared} вместе, остальные личные`}
+          caption={t('dashboard.monthTogether', { count: stats.monthShared })}
           icon={FiCalendar}
           gradient="bg-grad-him"
         />
         <MetricCard
-          label="Общих целей"
+          label={t('dashboard.metricGoals')}
           value={stats.goals}
-          caption={`Средний прогресс ${stats.avgProgress}%`}
+          caption={t('dashboard.avgProgress', { pct: stats.avgProgress })}
           icon={FiTarget}
           gradient="bg-grad-her"
           trend="+1"
         />
         <MetricCard
-          label="Дни вместе"
+          label={t('dashboard.metricDays')}
           value={stats.daysTogether}
           caption={stats.togetherCaption}
           icon={FiHeart}

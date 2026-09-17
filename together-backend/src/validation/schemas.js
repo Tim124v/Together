@@ -15,7 +15,15 @@ export const registerSchema = z.object({
   password,
   name: z.string().min(1).max(255),
   avatarColor: z.enum(['pink', 'blue', 'green']).optional(),
+  language: z.enum(['ru', 'en', 'es', 'fr', 'de', 'it', 'uk', 'pl']).optional(),
+  currency: z.enum(['RUB', 'USD', 'EUR', 'GBP', 'UAH', 'PLN']).optional(),
+  country: z.string().min(2).max(8).optional(),
 })
+
+export const localeSchema = z.object({
+  language: z.enum(['ru', 'en', 'es', 'fr', 'de', 'it', 'uk', 'pl']).optional(),
+  currency: z.enum(['RUB', 'USD', 'EUR', 'GBP', 'UAH', 'PLN']).optional(),
+}).refine((d) => d.language || d.currency, { message: 'Нужен language или currency' })
 
 export const loginSchema = z.object({ email, password })
 
@@ -24,14 +32,14 @@ export const refreshSchema = z.object({
 })
 
 export const createCoupleSchema = z.object({
-  coupleName: z.string().min(1).max(255).optional(),
+  coupleName: z.string().min(1).max(100).optional(),
   startDate: date,
   partnerEmail: email.optional(),
   inviteCode: z.string().min(4).max(16).optional(),
 })
 
 export const updateCoupleSchema = z.object({
-  coupleName: z.string().min(1).max(255).optional(),
+  coupleName: z.string().min(1).max(100).optional(),
   startDate: date,
 })
 

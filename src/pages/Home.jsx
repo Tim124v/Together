@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import Modals from '../components/Modals'
-import Sidebar, { NAV_ITEMS } from '../components/Sidebar'
+import Sidebar, { useNavItems } from '../components/Sidebar'
 import { useApp } from '../context/AppContext'
 import { cx } from '../utils/helpers'
 
 function MobileNav() {
   const { page } = useApp()
   const navigate = useNavigate()
+  const NAV_ITEMS = useNavItems()
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/60 bg-canvas/90 px-1 pt-1 backdrop-blur-xl lg:hidden dark:border-white/10 dark:bg-[#0b1020]/90 pb-[max(6px,env(safe-area-inset-bottom))]">
