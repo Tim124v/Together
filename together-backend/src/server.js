@@ -39,7 +39,7 @@ server.on('error', (err) => {
   process.exit(1)
 })
 server.listen(port, '0.0.0.0', () => {
-  const host = process.env.PUBLIC_API_URL || `http://localhost:${port}`
+  const host = process.env.PUBLIC_API_URL || process.env.RENDER_EXTERNAL_URL || `http://localhost:${port}`
   console.log(`Together API  ${host}`)
   console.log(`Swagger       ${host.replace(/\/$/, '')}/api/docs`)
   console.log(`Socket.io     ${host}`)

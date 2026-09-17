@@ -157,36 +157,36 @@ socket.on('expense:deleted', ({ itemId }) => {})
 - OpenAPI JSON: http://localhost:5050/api/docs.json
 - Postman: `docs/Together.postman_collection.json`
 
-`PUBLIC_API_URL` в `.env` подменяет базовый URL в Swagger (для Railway).
+`PUBLIC_API_URL` в `.env` подменяет базовый URL в Swagger (на Render берётся ещё `RENDER_EXTERNAL_URL`).
+
+## Production Deploy (Render)
+
+Рекомендуемый хостинг API: [Render](https://render.com) Free. Корневой `render.yaml` — Blueprint; в этой папке лежит копия `render.yaml` (если в UI указать этот путь).
+
+1. Dashboard → **New → Blueprint** → репозиторий Together, `main`. Либо New → Web Service, **Root Directory: `together-backend`**, Build `npm ci --omit=optional`, Start `npm start`, plan **Free**, region Frankfurt.
+2. Postgres `together-db` (Free, Frankfurt). В API добавьте Internal `DATABASE_URL`.
+3. Variables — шаблон `.env.render.example`. `PORT` задаёт Render. При старте `sequelize.sync()` создаёт таблицы.
+4. Проверка: `https://together-api.onrender.com/health` и `/api/docs`.
+5. Демо-логин без wipe — Shell сервиса: `npm run seed:demo`.
+
+Полный чеклист (Vercel, спин-даун, срок Free Postgres) — в корневом `README.md`.
 
 ## Production Deploy (Railway)
 
-Root Directory в Railway: `together-backend`. Файл `railway.json` уже в этой папке.
+Запасной вариант. Root Directory: `together-backend`. Файл `railway.json` уже в этой папке.
 
 1. New Project → Deploy from GitHub → репозиторий Together, branch `main`, root `together-backend`.
 2. **+ New** → Database → PostgreSQL. Railway подставит `DATABASE_URL`.
-3. Variables сервиса API:
+3. Variables сервиса API — `.env.production.example`.
 
-```
-NODE_ENV=production
-DB_DIALECT=postgres
-CORS_ORIGIN=https://<ваш-проект>.vercel.app
-PUBLIC_API_URL=https://<ваш-сервис>.up.railway.app
-JWT_ACCESS_SECRET=<случайная строка 32+>
-JWT_REFRESH_SECRET=<другая случайная строка 32+>
-JWT_ACCESS_EXPIRES=24h
-JWT_REFRESH_EXPIRES=30d
-DB_SYNC=sync
-```
-
-`PORT` задаёт Railway. При старте `sequelize.sync()` создаёт недостающие таблицы. SQL-миграции (`migrations/001_*.sql`, `002_*.sql`) — запасной путь через `psql`.
+`PORT` задаёт Railway. SQL-миграции (`migrations/001_*.sql`, `002_*.sql`) — запасной путь через `psql`.
 
 4. Проверка: `https://<сервис>.up.railway.app/health` и `/api/docs`.
 
-`npm run seed` на production **заблокирован** (стирает данные). Для демо-логина без wipe выполните в Railway:
+`npm run seed` на production **заблокирован** (стирает данные). Для демо-логина без wipe:
 
 ```bash
-railway run npm run seed:demo
+npm run seed:demo
 ```
 
 Это создаст `artem@together.app` / `katya@together.app` (пароль `together123`), если их ещё нет.
@@ -208,7 +208,9 @@ together-backend/
 │   ├── services/        auth, socket, activity, couple
 │   ├── App.js
 │   └── server.js
+├── render.yaml
 ├── .env.example
+├── .env.render.example
 └── package.json
 ```
 

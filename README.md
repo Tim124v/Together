@@ -195,33 +195,93 @@ together-mvp/
 
 Добавленные объекты попадают в ленту активностей и пересчитывают метрики на Dashboard.
 
-## Production Deploy (Vercel + Railway)
+## Production Deploy (Vercel + Render)
 
-Полный стек: API на [Railway](https://railway.app) (`together-backend/`), UI на [Vercel](https://vercel.com) (корень репо).
+Полный стек: API на [Render](https://render.com) (`together-backend/`), UI на [Vercel](https://vercel.com) (корень репо). Бесплатный план Render: web-сервис + Postgres.
 
-### Backend (Railway)
+### Deployment на Render (Бесплатно!)
 
-1. New Project → Deploy from GitHub → этот репозиторий, **Root Directory: `together-backend`**.
-2. Add PostgreSQL. Railway сам добавит `DATABASE_URL`.
-3. Variables: см. `together-backend/.env.production.example` (`NODE_ENV`, JWT-секреты 32+, `CORS_ORIGIN`, `PUBLIC_API_URL`).
-4. Проверка: `https://<сервис>.up.railway.app/health` и `/api/docs`.
+Render даёт бесплатный Web Service (спин-даун после 15 мин простоя) и бесплатный Postgres (1 ГБ, **истекает через 30 дней**). Этого достаточно для MVP.
 
-Подробности — в `together-backend/README.md`.
+Файл `render.yaml` лежит в **корне репозитория** (Render Blueprint читает его оттуда). Копия для ручного пути — `together-backend/render.yaml`. Переменные: `together-backend/.env.render.example` и `.env.render.example` (фронт).
 
-### Frontend (Vercel)
+#### Backend (Node.js API + PostgreSQL)
+
+**Вариант A — Blueprint (рекомендуется)**
+
+1. [dashboard.render.com](https://dashboard.render.com) → **New → Blueprint**.
+2. Подключить GitHub-репозиторий `Tim124v/Together`, branch `main`.
+3. Render подхватит корневой `render.yaml`: сервис `together-api` + БД `together-db` (Frankfurt, Free).
+4. Когда спросит `sync: false` переменные:
+   - `CORS_ORIGIN` = `https://<ваш-проект>.vercel.app` (можно сначала `https://placeholder.vercel.app` и поправить после деплоя фронта)
+   - `PUBLIC_API_URL` = появится после первого деплоя, вида `https://together-api.onrender.com` — сохраните и при необходимости обновите
+5. Apply. JWT-секреты сгенерируются сами (`generateValue`).
+
+**Вариант B — вручную через UI**
+
+1. **Создать сервис API:**
+   - Перейти на [render.com](https://render.com) → New → **Web Service**
+   - Подключить GitHub-репозиторий (`Tim124v/Together`)
+   - Name: `together-api`
+   - Region: **Frankfurt**
+   - Branch: `main`
+   - Root Directory: `together-backend`
+   - Runtime: Node
+   - Build Command: `npm ci --omit=optional`
+   - Start Command: `npm start`
+   - Instance Type: **Free**
+
+2. **Добавить PostgreSQL:**
+   - New → **PostgreSQL**
+   - Name: `together-db`
+   - Database: `together`
+   - User: `together_user`
+   - Region: **Frankfurt** (как API)
+   - Instance Type: **Free**
+   - В сервисе API: Environment → Add `DATABASE_URL` from `together-db` (Internal Database URL)
+
+3. **Переменные окружения API:**
+
+```
+NODE_ENV=production
+JWT_ACCESS_SECRET=<openssl rand -hex 32>
+JWT_REFRESH_SECRET=<другой openssl rand -hex 32>
+CORS_ORIGIN=https://<проект>.vercel.app
+PUBLIC_API_URL=https://together-api.onrender.com
+DB_SYNC=sync
+PGSSL=true
+DB_DIALECT=postgres
+DATABASE_URL=<Internal Database URL из together-db>
+```
+
+`PORT` не задавайте — Render подставит сам.
+
+4. Проверка: `https://together-api.onrender.com/health` и `/api/docs`. Первый запрос после сна сервиса может занять ~30–60 секунд.
+
+5. Демо-аккаунты (база **не** стирается): в Render Dashboard → сервис API → **Shell**:
+
+```bash
+npm run seed:demo
+```
+
+Логин: `artem@together.app` / `together123`. Обычный `npm run seed` на production запрещён.
+
+#### Frontend (Vercel)
 
 1. New Project → этот репозиторий. Framework: **Vite**, Root: `.`, Build: `npm run build`, Output: `dist`.
 2. Environment Variables **до** первого успешного продакшен-деплоя (иначе нужен Redeploy):
 
 ```
-VITE_API_URL=https://<сервис>.up.railway.app/api
-VITE_SOCKET_URL=https://<сервис>.up.railway.app
-VITE_WS_URL=https://<сервис>.up.railway.app
+VITE_API_URL=https://together-api.onrender.com/api
+VITE_SOCKET_URL=https://together-api.onrender.com
+VITE_WS_URL=https://together-api.onrender.com
 VITE_APP_NAME=Together
 ```
 
+Подставьте свой onrender-URL, если имя сервиса другое. Шаблон: `.env.render.example`.
+
 3. `vercel.json` уже редиректит SPA-роуты на `index.html`.
-4. Скопируйте URL вида `https://<проект>.vercel.app` в Railway `CORS_ORIGIN` и рестартните API.
+4. Скопируйте `https://<проект>.vercel.app` в Render `CORS_ORIGIN` и сделайте **Manual Deploy** API.
 
 Локальная проверка сборки:
 
@@ -230,7 +290,15 @@ npm run build
 npm run preview
 ```
 
-Шаблоны переменных: `.env.production.example` и `together-backend/.env.production.example`. Файлы `.env` / `.env.production` в git не попадают.
+#### Ограничения Free
+
+- Web Service засыпает через 15 минут без трафика; WebSocket после пробуждения переподключается сам.
+- Free Postgres: 1 ГБ, один на workspace, удаляется через 30 дней (+14 дней на апгрейд).
+- `sqlite3` на Render не ставится (`npm ci --omit=optional`) — локально он optional и нужен для SQLite.
+
+Шаблоны: `.env.render.example`, `together-backend/.env.render.example`, `.env.production.example`. Файлы `.env` в git не попадают.
+
+Railway остаётся запасным вариантом — см. `together-backend/README.md`.
 
 ## Скриншоты
 

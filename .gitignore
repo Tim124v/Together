@@ -5,6 +5,8 @@ dist
 .env
 .env.local
 .env.production
+.env.render
+together-backend/.env.render
 screenshots/_test.png
 together-backend/data
 together-backend/.env

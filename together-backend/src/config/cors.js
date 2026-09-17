@@ -11,11 +11,13 @@ export const corsOrigins = [
 ]
 
 const vercelPreview = /^https:\/\/[\w.-]+\.vercel\.app$/
+const renderPreview = /^https:\/\/[\w.-]+\.onrender\.com$/
 
 export function isAllowedOrigin(origin) {
   if (!origin) return true
   if (corsOrigins.includes(origin)) return true
   if (vercelPreview.test(origin)) return true
+  if (renderPreview.test(origin)) return true
   return false
 }
 

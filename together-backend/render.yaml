@@ -1,0 +1,43 @@
+# Тот же стек, если в Render Blueprint указать этот путь.
+# По умолчанию Render читает /render.yaml в корне репозитория (там задан rootDir).
+
+services:
+  - type: web
+    name: together-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci --omit=optional
+    startCommand: npm start
+    healthCheckPath: /health
+    numInstances: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_DIALECT
+        value: postgres
+      - key: DB_SYNC
+        value: sync
+      - key: PGSSL
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: together-db
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false
+      - key: PUBLIC_API_URL
+        sync: false
+
+databases:
+  - name: together-db
+    plan: free
+    region: frankfurt
+    databaseName: together
+    user: together_user
+    postgresMajorVersion: "16"
+    ipAllowList: []

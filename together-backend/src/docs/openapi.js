@@ -1,4 +1,8 @@
-const server = process.env.PUBLIC_API_URL || `http://localhost:${process.env.PORT || 5050}`
+const server = (
+  process.env.PUBLIC_API_URL ||
+  process.env.RENDER_EXTERNAL_URL ||
+  `http://localhost:${process.env.PORT || 5050}`
+).replace(/\/$/, '')
 
 export const openApiSpec = {
   openapi: '3.0.3',

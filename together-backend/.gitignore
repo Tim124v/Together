@@ -3,5 +3,6 @@ data
 data/together.sqlite
 .env
 .env.production
+.env.render
 *.log
 .DS_Store
